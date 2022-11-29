@@ -1,4 +1,4 @@
-name: containerr
+name: container
 on: push
 
 jobs:
