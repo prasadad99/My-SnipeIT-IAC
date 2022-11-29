@@ -1,0 +1,40 @@
+name: containerr
+on: push
+
+jobs:
+  container:
+    #needs: [s3deploy]
+    runs-on: ubuntu-18.04
+    container: pearlthoughts/p2p-packer:latest
+    steps:
+      # - uses: trstringer/manual-approval@v1
+      #   with:
+      #     secret: ${{ github.TOKEN }}
+      #     approvers: tejapearlthoughts
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          #aws_session_token: ${{ secrets.AWS_SESSION_TOKEN}}
+          aws-region: ap-northeast-1
+      - run: |
+          repo_name=${{ github.event.repository.name }}
+          git config --global --add safe.directory /__w/$repo_name/$repo_name
+          git_hash=$(git rev-parse --short "$GITHUB_SHA")
+          echo "$SSH_KEY" > /__w/$repo_name/$repo_name/Ansible/id_rsa
+          packer init .
+          packer build \
+          -var "build_number=$GITHUB_RUN_NUMBER" \
+          -var "commit_sha=$git_hash"  .
+
+          
+          
+          
+        name: Run in container
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }} 
+          # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+          # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
